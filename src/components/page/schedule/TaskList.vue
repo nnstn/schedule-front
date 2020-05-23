@@ -19,7 +19,7 @@
                 </el-select>
                 <el-input v-model="query.name" placeholder="用户名" class="handle-input mr10"></el-input>
                 <el-button type="primary" icon="el-icon-search" @click="handleSearch">搜索</el-button>
-                <el-button type="primary" @click="openInsert">新增</el-button>
+                <el-button type="primary" icon="el-icon-plus" @click="openInsert">新增</el-button>
             </div>
             <el-table
                     :data="tableData"
@@ -101,7 +101,7 @@
             </span>
         </el-dialog>
 
-        <!-- 添加任务 -->
+        <!-- 添加任务弹出框 -->
         <el-dialog title="添加任务" :visible.sync="scheduleVisible" width="30%">
             <el-form ref="form" :model="task" label-width="70px">
                 <el-form-item label="任务名称">
@@ -110,7 +110,7 @@
                 <el-form-item label="任务时间">
                     <el-date-picker class="formitem"
                                     v-model="task.daterange"
-                                    value-format="timestamp"
+                                    value-format="yyyy-MM-dd"
                                     type="daterange"
                                     range-separator="至"
                                     start-placeholder="开始日期"
@@ -119,19 +119,21 @@
                 </el-form-item>
                 <el-form-item label="任务类型">
                     <el-select v-model="task.taskType" placeholder="任务类型" class="formitem">
-                        <el-option v-for="item in taskTypes" :key="item.value" :label="item.label" :value="item.value">
-                        </el-option>
+                        <el-option v-for="item in taskTypes" :key="item.value" :label="item.label" :value="item.value"></el-option>
                     </el-select>
                 </el-form-item>
                 <el-form-item label="是否提醒">
-                    <el-select v-model="task.remind" placeholder="任务提醒" class="formitem">
-                        <el-option key="1" label="不提醒" value="false" default></el-option>
-                        <el-option key="2" label="提醒" value="true"></el-option>
+                    <el-select v-model="task.noticeType" placeholder="任务提醒" class="formitem">
+                        <el-option v-for="item in noticeTypes" :key="item.value" :label="item.label" :value="item.value"></el-option>
+
                     </el-select>
                 </el-form-item>
             </el-form>
             <div>{{task.taskType}}</div>
-            <div>{{task.remind}}</div>
+            <div>{{task.noticeType}}</div>
+            <div>{{task.daterange}}</div>
+            <div>{{idx}}</div>
+            <div>{{idx}}</div>
             <span slot="footer" class="dialog-footer">
                 <el-button @click="scheduleVisible = false">取 消</el-button>
                 <el-button type="primary" @click="saveInsert">确 定</el-button>
@@ -155,6 +157,11 @@
                     {value: '5', label: 'bug处理'},
                     {value: '6', label: '环境部署'}
                 ],
+                noticeTypes:[
+                    {value: '1', label: '不提醒'},
+                    {value: '2', label: '邮件提醒'},
+                    {value: '3', label: '易信提醒'},
+                ],
                 query: {
                     address: '',
                     name: '',
@@ -169,8 +176,9 @@
                 pageTotal: 0,
                 form: {},
                 task: {},
+                id: -1,
                 idx: -1,
-                id: -1
+                rowx:{}
             };
         },
         created() {
@@ -178,9 +186,11 @@
         },
         methods: {
             // 打开新增弹窗
-            openInsert(index, row) {
-                this.idx = index;
-                this.task = {};
+            openInsert() {
+                this.task = {
+                    taskType: '1', //默认为开发任务
+                    noticeType:'1' //默认不提醒
+                },
                 this.scheduleVisible = true;
             },
             // 保存新增日程

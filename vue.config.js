@@ -1,16 +1,16 @@
 module.exports = {
-    baseUrl: './',
+    baseUrl: '/',
     assetsDir: 'static',
     productionSourceMap: false,
-    // devServer: {
-    //     proxy: {
-    //         '/api':{
-    //             target:'http://jsonplaceholder.typicode.com',
-    //             changeOrigin:true,
-    //             pathRewrite:{
-    //                 '/api':''
-    //             }
-    //         }
-    //     }
-    // }
+    devServer: {
+        proxy: {
+            '/api':{
+                target:'http://localhost:8090/',
+                changeOrigin:true,
+                pathRewrite:{
+                    '/api/':''
+                }
+            }
+        }
+    }
 }
