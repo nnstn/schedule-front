@@ -12,6 +12,17 @@ const task =  {
             url: '/task/insert',
             data: data
         });
+    },
+    delete:function (id) {
+        return request({
+            url: '/task/delete/'+id
+        });
+    },
+    update:function (id) {
+        return request({
+            url: '/task/delete/'+id,
+            data: data
+        });
     }
 }
 

@@ -13,7 +13,8 @@
                 <el-button type="primary" icon="el-icon-circle-check" class="handle-del mr10" @click="delAllSelection">
                     批量完成
                 </el-button>
-                <el-input v-model="query.key" placeholder="任务名称" class="handle-input mr10"></el-input>
+                <el-input v-model="query.key1" placeholder="任务名称" class="handle-input mr10"></el-input>
+                <el-input v-model="query.key2" placeholder="任务归属" class="handle-input mr10"></el-input>
                 <el-button type="primary" icon="el-icon-search" @click="handleSearch">搜索</el-button>
                 <el-button type="primary" icon="el-icon-refresh-left" @click="handleReset">重置</el-button>
                 <el-button type="primary" icon="el-icon-plus" @click="openInsert">新增</el-button>
@@ -43,18 +44,14 @@
 
                 <el-table-column label="操作" width="180" align="center">
                     <template slot-scope="scope">
-                        <el-button
-                                type="text"
-                                icon="el-icon-edit"
+                        <el-button type="text" icon="el-icon-edit"
                                 @click="handleEdit(scope.$index, scope.row)"
                         >编辑
                         </el-button>
-                        <el-button
-                                type="text"
-                                icon="el-icon-delete"
-                                class="red"
-                                @click="handleDelete(scope.$index, scope.row)"
-                        >删除
+                        <el-button type="text" icon="el-icon-delete" class="red"
+                                   @click="handleDelete(scope.$index, scope.row)"
+                        >
+                        删除
                         </el-button>
                     </template>
                 </el-table-column>
@@ -140,7 +137,10 @@
                     {value: '2', label: '提醒'}
                 ],
                 query: {
-                    key: '',
+                    key1: '',
+                    key2: '',
+                    key3: '',
+                    tasker:'',
                     pageNo: 1,
                     pageSize: 10,
                     desc: true,
@@ -176,6 +176,11 @@
 
                 });
             },
+            // 触发搜索按钮
+            handleSearch() {
+                this.$set(this.query, 'pageNo', 1);
+                this.getData();
+            },
             // 打开新增弹窗
             openInsert() {
                 this.task = {
@@ -204,23 +209,47 @@
                 });
 
             },
-            // 触发搜索按钮
-            handleSearch() {
-                this.$set(this.query, 'pageNo', 1);
-                this.getData();
-            },
             // 删除操作
             handleDelete(index, row) {
                 // 二次确认删除
                 this.$confirm('确定要删除吗？', '提示', {
                     type: 'warning'
                 })
-                    .then(() => {
-                        this.$message.success('删除成功');
-                        this.tableData.splice(index, 1);
-                    })
-                    .catch(() => {
+                .then(() => {
+                    task.delete(row.id).then(res => {
+                        if (res.flag) {
+                            this.getData();
+                            this.$message.success('删除成功');
+                        } else {
+                            this.$message.error(res.message)
+                        }
                     });
+                })
+                .catch(() => {
+                });
+            },
+            // 分页导航
+            handlePageChange(val) {
+                this.$set(this.query, 'pageNo', val);
+                this.getData();
+            },
+            // 页面重置
+            handleReset() {
+                this.$set(this.query,'pageNo' , 1);
+                this.getData();
+            },
+            //==============================待完善
+            // 编辑操作
+            handleEdit(index, row) {
+                this.idx = index;
+                this.form = row;
+                this.editVisible = true;
+            },
+            // 保存编辑
+            saveEdit() {
+                this.editVisible = false;
+                this.$message.success(`修改第 ${this.idx + 1} 行成功`);
+                this.$set(this.tableData, this.idx, this.form);
             },
             // 多选操作
             handleSelectionChange(val) {
@@ -235,28 +264,6 @@
                 }
                 this.$message.error(`删除了${str}`);
                 this.multipleSelection = [];
-            },
-            // 编辑操作
-            handleEdit(index, row) {
-                this.idx = index;
-                this.form = row;
-                this.editVisible = true;
-            },
-            // 保存编辑
-            saveEdit() {
-                this.editVisible = false;
-                this.$message.success(`修改第 ${this.idx + 1} 行成功`);
-                this.$set(this.tableData, this.idx, this.form);
-            },
-            // 分页导航
-            handlePageChange(val) {
-                this.$set(this.query, 'pageNo', val);
-                this.getData();
-            },
-            // 页面重置
-            handleReset() {
-                this.$set(this.query,'pageNo' , 1);
-                this.getData();
             }
         },
         computed: {
@@ -274,7 +281,7 @@
     }
 
     .handle-input {
-        width: 300px;
+        width: 100px;
         display: inline-block;
     }
 
