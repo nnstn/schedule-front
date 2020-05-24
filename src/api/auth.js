@@ -4,7 +4,7 @@ const auth =  {
     login:(data) => {
         return request({
             url: '/auth/login',
-            params: data
+            data: data
         });
     },
     register:function () {

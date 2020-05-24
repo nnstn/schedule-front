@@ -1,18 +1,18 @@
 import request from '../utils/request';
 
-export default {
-    getall:function (query) {
+const task =  {
+    getall:(data) => {
         return request({
-            url: './task.json',
-            method: 'get',
-            params: query
+            url: '/task/getall',
+            data: data
         });
     },
-    get:function () {
+    insert:function (data) {
         return request({
-            url: './task.json',
-            method: 'get',
-            params: query
+            url: '/task/insert',
+            data: data
         });
     }
 }
+
+export default task;

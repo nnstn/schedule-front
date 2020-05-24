@@ -4,7 +4,7 @@
             <div class="ms-title">后台管理系统</div>
             <el-form :model="param" :rules="rules" ref="login" label-width="0px" class="ms-content">
                 <el-form-item prop="username">
-                    <el-input v-model="param.username" placeholder="username">
+                    <el-input v-model="param.userCode" placeholder="userCode或邮箱">
                         <el-button slot="prepend" icon="el-icon-lx-people"></el-button>
                     </el-input>
                 </el-form-item>
@@ -34,11 +34,11 @@
         data: function () {
             return {
                 param: {
-                    username: 'wangjn_bj',
+                    userCode: 'wangjn_bj',
                     password: '123456',
                 },
                 rules: {
-                    username: [{required: true, message: '请输入用户名', trigger: 'blur'}],
+                    userCode: [{required: true, message: '请输入用户名或邮箱', trigger: 'blur'}],
                     password: [{required: true, message: '请输入密码', trigger: 'blur'}],
                 },
             };
@@ -50,7 +50,7 @@
                         auth.login(this.param).then((data) => {
                             if (data.flag) {
                                 this.$message.success('登录成功');
-                                localStorage.setItem('ms_username', this.param.username);
+                                localStorage.setItem('ms_username', this.param.userCode);
                                 this.$router.push('/');
                             } else {
                                 this.$message.error(data.message)
