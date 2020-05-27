@@ -13,12 +13,13 @@
                 <el-button type="primary" icon="el-icon-circle-check" class="handle-del mr10" @click="delAllSelection">
                     批量完成
                 </el-button>
-                <el-input v-model="query.key1" placeholder="任务名称" class="handle-input mr10"></el-input>
-                <el-input v-model="query.key2" placeholder="任务归属" class="handle-input mr10"></el-input>
+                <el-input v-model="query.taskName" placeholder="任务名称" class="handle-input mr10"></el-input>
+                <el-input v-model="query.tasker" placeholder="任务归属" class="handle-input mr10"></el-input>
                 <el-button type="primary" icon="el-icon-search" @click="handleSearch">搜索</el-button>
                 <el-button type="primary" icon="el-icon-refresh-left" @click="handleReset">重置</el-button>
                 <el-button type="primary" icon="el-icon-plus" @click="openInsert">新增</el-button>
             </div>
+            {{task.daterange}}
             <el-table
                     :data="tableData"
                     border
@@ -45,7 +46,7 @@
                 <el-table-column label="操作" width="180" align="center">
                     <template slot-scope="scope">
                         <el-button type="text" icon="el-icon-edit"
-                                @click="handleEdit(scope.$index, scope.row)"
+                                @click="openEdit(scope.$index, scope.row)"
                         >编辑
                         </el-button>
                         <el-button type="text" icon="el-icon-delete" class="red"
@@ -67,21 +68,24 @@
                 ></el-pagination>
             </div>
         </div>
-        <!-- 添加任务弹出框 -->
-        <el-dialog title="添加任务" :visible.sync="scheduleVisible" width="30%">
-            <el-form ref="form" :model="task" label-width="70px">
-                <el-form-item label="任务名称">
+
+        <!-- 添加|编辑 任务弹出框 -->
+        <el-dialog :title="textMap[dialogFlag].title" :visible.sync="scheduleVisible" width="30%">
+            <el-form ref="dataForm" :model="task" :rules="rules"  label-width="100px">
+                <el-form-item label="任务名称" prop="taskName">
                     <el-input v-model="task.taskName"></el-input>
                 </el-form-item>
-                <el-form-item label="任务时间">
+                <el-form-item label="任务时间" prop="daterange">
                     <el-date-picker class="formitem"
                                     v-model="task.daterange"
                                     value-format="yyyy-MM-dd"
                                     type="daterange"
                                     range-separator="至"
                                     start-placeholder="开始日期"
-                                    end-placeholder="结束日期">
+                                    end-placeholder="结束日期"
+                                    @blur="testClick" >
                     </el-date-picker>
+                    {{task.daterange}}
                 </el-form-item>
                 <el-form-item label="任务类型">
                     <el-select v-model="task.taskType" placeholder="任务类型" class="formitem">
@@ -108,10 +112,14 @@
                         <el-option key="3" label="完成" value="3"></el-option>
                     </el-select>
                 </el-form-item>
+                <el-form-item label="上次操作时间"  v-if="dialogFlag==='edit'">
+                    <el-input v-model="task.lastUpdateTime" :disabled="true"></el-input>
+                </el-form-item>
+
             </el-form>
             <span slot="footer" class="dialog-footer">
                 <el-button @click="scheduleVisible = false">取 消</el-button>
-                <el-button type="primary" @click="saveInsert">确 定</el-button>
+                <el-button type="primary" @click="dialogFlag==='add'?saveInsert():saveEdit()">确 定</el-button>
             </span>
         </el-dialog>
     </div>
@@ -137,14 +145,10 @@
                     {value: '2', label: '提醒'}
                 ],
                 query: {
-                    key1: '',
-                    key2: '',
-                    key3: '',
-                    tasker:'',
+                    taskName: '',
+                    tasker: '',
                     pageNo: 1,
                     pageSize: 10,
-                    desc: true,
-                    sortBy: "last_update_time"
                 },
                 tableData: [],
                 multipleSelection: [],
@@ -152,12 +156,30 @@
                 editVisible: false,
                 scheduleVisible: false,
                 pageTotal: 0,
-                form: {},
                 task: {},
                 id: -1,
                 idx: -1,
-                rowx: {}
-            };
+                dialogFlag:'add',
+                textMap: {
+                    add: {
+                        title: '添加任务',
+                        operator: '操作者',
+                        operateTime: '操作时间',
+                        operateIp: '操作IP'
+                    },
+                    edit: {
+                        title: '编辑任务',
+                        operator: '上次操作者',
+                        operateTime: '上次操作时间',
+                        operateIp: '上次操作IP'
+                    }
+                },
+                // 校验
+                rules: {
+                    taskName: [{ required: true, message: 'taskName is required', trigger: 'change' }],
+                    daterange: [{ required: true, message: 'daterange is required', trigger: 'change' }]
+                }
+            }
         },
         created() {
             this.getData();
@@ -166,7 +188,6 @@
             // 获取 easy-mock 的模拟数据
             getData() {
                 task.getall(this.query).then(res => {
-                    console.log(res);
                     if (res.flag) {
                         this.tableData = res.data.items;
                         this.pageTotal = res.data.total || 50;
@@ -183,31 +204,60 @@
             },
             // 打开新增弹窗
             openInsert() {
+                this.dialogFlag='add';
                 this.task = {
                     taskName:'',         //任务名称
                     taskType: '开发编码', //任务类型：默认为开发任务
                     noticeType: '1',     //任务提醒：默认不提醒
                     topping: "false",    //是否置顶
-                    state: "1",          //任务状态
-                    startDate:'',        //开始时间
-                    endDate:''           //结束时间
+                    state: "1"           //任务状态
                 }
                 this.scheduleVisible = true;
+                this.$nextTick(() => {
+                    this.$refs['dataForm'].clearValidate()
+                })
             },
             // 保存新增日程
             saveInsert() {
+                this.$refs['dataForm'].validate((valid) => {
+                    if(valid){
+                        this.task.startDate = this.task.daterange[0];
+                        this.task.endDate = this.task.daterange[1];
+                        task.insert(this.task).then(res => {
+                            if (res.flag) {
+                                this.scheduleVisible = false;
+                                this.getData();
+                                this.$message.success("新增数据成功");
+                            } else {
+                                this.$message.error(res.message)
+                            }
+                        });
+                    }
+                })
+            },
+            // 编辑操作
+            openEdit(index, row) {
+                this.dialogFlag='edit';
+                this.idx = index;
+                this.task = row;
+                this.task.state = row.state+"";
+                this.task.topping= row.topping?"true":"false";
+                this.task.daterange =[row.startDate,row.endDate];
+                this.scheduleVisible = true;
+            },
+            // 保存编辑
+            saveEdit() {
                 this.task.startDate = this.task.daterange[0];
                 this.task.endDate = this.task.daterange[1];
-                task.insert(this.task).then(res => {
+                task.update(this.task).then(res => {
                     if (res.flag) {
                         this.scheduleVisible = false;
+                        this.$message.success(`修改第 ${this.idx + 1} 行成功`);
                         this.getData();
-                        this.$message.success("新增数据成功");
                     } else {
                         this.$message.error(res.message)
                     }
                 });
-
             },
             // 删除操作
             handleDelete(index, row) {
@@ -235,22 +285,24 @@
             },
             // 页面重置
             handleReset() {
+                this.query = {
+                    taskName: '',
+                        tasker: '',
+                        pageNo: 1,
+                        pageSize: 10,
+                },
                 this.$set(this.query,'pageNo' , 1);
                 this.getData();
             },
+            testClick(e) {
+                this.$nextTick(() => {
+                    console.log(this.task.daterange);
+                    let date = this.task.daterange;
+                    this.task.daterange = null;
+                    this.$set(this.task, "daterange", [date[0], date[1]]);
+                });
+            },
             //==============================待完善
-            // 编辑操作
-            handleEdit(index, row) {
-                this.idx = index;
-                this.form = row;
-                this.editVisible = true;
-            },
-            // 保存编辑
-            saveEdit() {
-                this.editVisible = false;
-                this.$message.success(`修改第 ${this.idx + 1} 行成功`);
-                this.$set(this.tableData, this.idx, this.form);
-            },
             // 多选操作
             handleSelectionChange(val) {
                 this.multipleSelection = val;

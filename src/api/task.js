@@ -18,9 +18,9 @@ const task =  {
             url: '/task/delete/'+id
         });
     },
-    update:function (id) {
+    update:function (data) {
         return request({
-            url: '/task/delete/'+id,
+            url: '/task/update',
             data: data
         });
     }
