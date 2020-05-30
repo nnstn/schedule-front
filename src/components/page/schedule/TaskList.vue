@@ -10,7 +10,6 @@
         </div>
         <div class="container">
             <div class="handle-box">
-                {{task.daterange}}
                 <el-button type="primary" icon="el-icon-circle-check" class="handle-del mr10" @click="doneAllSelection">
                     批量完成
                 </el-button>
@@ -39,6 +38,7 @@
                     <template slot-scope="scope">
                         <el-tag :type="scope.row.state==3?'success':(scope.row.state==2?'danger':'warning')">
                         {{scope.row.state===3?'完成':(scope.row.state===2?'进行中':'新增')}}
+                            {{scope.row.state}}
                         </el-tag>
                     </template>
                 </el-table-column>
@@ -85,6 +85,7 @@
                 </el-form-item>
                 <el-form-item label="任务时间" prop="daterange">
                     <el-date-picker class="formitem"
+                                    id="dataid"
                                     v-model="task.daterange"
                                     value-format="yyyy-MM-dd"
                                     type="daterange"
@@ -115,9 +116,9 @@
                 </el-form-item>
                 <el-form-item label="任务状态">
                     <el-select v-model="task.state" placeholder="任务状态" class="formitem">
-                        <el-option key="1" label="新增" value="1"></el-option>
-                        <el-option key="2" label="处理中" value="2"></el-option>
-                        <el-option key="3" label="完成" value="3"></el-option>
+                        <el-option :key="1" label="新增" :value="1"></el-option>
+                        <el-option :key="2" label="处理中" :value="2"></el-option>
+                        <el-option :key="3" label="完成" :value="3"></el-option>
                     </el-select>
                 </el-form-item>
                 <el-form-item label="上次操作时间"  v-if="dialogFlag==='edit'">
@@ -244,10 +245,11 @@
             },
             // 编辑操作
             openEdit(index, row) {
+                this.task = {};
                 this.dialogFlag='edit';
                 this.idx = index;
                 this.task = row;
-                this.task.state = row.state+"";
+                this.task.state = row.state;
                 this.task.topping= row.topping?"true":"false";
                 this.task.daterange =[row.startDate,row.endDate];
                 this.scheduleVisible = true;
@@ -255,14 +257,12 @@
                     this.$refs['dataForm'].clearValidate()
                 })
             },
+            //更改日期不触发 change事件
             handleTimestamp(e) {
-                // $emit('change')
-                this.$nextTick(() => {
-                    console.log(this.task.daterange);
-                    let date = this.task.daterange;
-                    this.$set(this.task, 'daterange', '');
-                    this.$set(this.task, 'daterange', [date[0], date[1]]);
-                });
+                let data = this.task.daterange;
+                //this.$set(this.task, 'daterange', [data[0], data[1]]);
+                this.$set(this.task, 'random'+new Date().getTime(), new Date().getTime());
+
             },
             // 保存编辑
             saveEdit() {
