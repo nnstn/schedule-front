@@ -10,7 +10,8 @@
         </div>
         <div class="container">
             <div class="handle-box">
-                <el-button type="primary" icon="el-icon-circle-check" class="handle-del mr10" @click="delAllSelection">
+                {{task.daterange}}
+                <el-button type="primary" icon="el-icon-circle-check" class="handle-del mr10" @click="doneAllSelection">
                     批量完成
                 </el-button>
                 <el-input v-model="query.taskName" placeholder="任务名称" class="handle-input mr10"></el-input>
@@ -19,7 +20,6 @@
                 <el-button type="primary" icon="el-icon-refresh-left" @click="handleReset">重置</el-button>
                 <el-button type="primary" icon="el-icon-plus" @click="openInsert">新增</el-button>
             </div>
-            {{task.daterange}}
             <el-table
                     :data="tableData"
                     border
@@ -42,7 +42,6 @@
                         </el-tag>
                     </template>
                 </el-table-column>
-
                 <el-table-column label="操作" width="180" align="center">
                     <template slot-scope="scope">
                         <el-button type="text" icon="el-icon-edit"
@@ -60,18 +59,27 @@
             <div class="pagination">
                 <el-pagination
                         background
-                        layout="total, prev, pager, next"
+                        layout="total, sizes, prev, pager, next, jumper"
                         :current-page="query.pageNo"
                         :page-size="query.pageSize"
+                        :page-sizes="[10, 20, 50, 100]"
                         :total="pageTotal"
+                        @size-change="handleSizeChange"
                         @current-change="handlePageChange"
                 ></el-pagination>
             </div>
         </div>
 
         <!-- 添加|编辑 任务弹出框 -->
-        <el-dialog :title="textMap[dialogFlag].title" :visible.sync="scheduleVisible" width="30%">
-            <el-form ref="dataForm" :model="task" :rules="rules"  label-width="100px">
+        <el-dialog :title="textMap[dialogFlag].title"
+                   :visible.sync="scheduleVisible"
+                   :close-on-click-modal="false"
+                   width="30%">
+            <el-form ref="dataForm"
+                     :model="task"
+                     :rules="rules"
+                     label-width="100px">
+
                 <el-form-item label="任务名称" prop="taskName">
                     <el-input v-model="task.taskName"></el-input>
                 </el-form-item>
@@ -83,9 +91,9 @@
                                     range-separator="至"
                                     start-placeholder="开始日期"
                                     end-placeholder="结束日期"
-                                    @blur="testClick" >
+                                    @blur="handleTimestamp"
+                                    >
                     </el-date-picker>
-                    {{task.daterange}}
                 </el-form-item>
                 <el-form-item label="任务类型">
                     <el-select v-model="task.taskType" placeholder="任务类型" class="formitem">
@@ -152,10 +160,9 @@
                 },
                 tableData: [],
                 multipleSelection: [],
-                delList: [],
-                editVisible: false,
                 scheduleVisible: false,
                 pageTotal: 0,
+                // 当前选中状态的任务信息
                 task: {},
                 id: -1,
                 idx: -1,
@@ -244,6 +251,18 @@
                 this.task.topping= row.topping?"true":"false";
                 this.task.daterange =[row.startDate,row.endDate];
                 this.scheduleVisible = true;
+                this.$nextTick(() => {
+                    this.$refs['dataForm'].clearValidate()
+                })
+            },
+            handleTimestamp(e) {
+                // $emit('change')
+                this.$nextTick(() => {
+                    console.log(this.task.daterange);
+                    let date = this.task.daterange;
+                    this.$set(this.task, 'daterange', '');
+                    this.$set(this.task, 'daterange', [date[0], date[1]]);
+                });
             },
             // 保存编辑
             saveEdit() {
@@ -283,6 +302,10 @@
                 this.$set(this.query, 'pageNo', val);
                 this.getData();
             },
+            handleSizeChange(val){
+                this.$set(this.query, 'pageSize', val);
+                this.getData();
+            },
             // 页面重置
             handleReset() {
                 this.query = {
@@ -294,28 +317,39 @@
                 this.$set(this.query,'pageNo' , 1);
                 this.getData();
             },
-            testClick(e) {
-                this.$nextTick(() => {
-                    console.log(this.task.daterange);
-                    let date = this.task.daterange;
-                    this.task.daterange = null;
-                    this.$set(this.task, "daterange", [date[0], date[1]]);
-                });
-            },
-            //==============================待完善
             // 多选操作
             handleSelectionChange(val) {
                 this.multipleSelection = val;
             },
-            delAllSelection() {
-                const length = this.multipleSelection.length;
+            doneAllSelection() {
                 let str = '';
-                this.delList = this.delList.concat(this.multipleSelection);
+                let ids = new Array();
+                let length =  this.multipleSelection.length;
                 for (let i = 0; i < length; i++) {
-                    str += this.multipleSelection[i].name + ' ';
+                    str += '【'+this.multipleSelection[i].taskName + '】 \r';
+                    ids.push(this.multipleSelection[i].id);
                 }
-                this.$message.error(`删除了${str}`);
-                this.multipleSelection = [];
+                if(ids.length==0){
+                    this.$message.warning("请选择要完成的任务")
+                    return;
+                }
+                // 二次确认任务弯沉
+                this.$confirm('确定任务'+str+'全部完成', '提示', {
+                    type: 'warning'
+                })
+                .then(() => {
+                    task.donetask(ids).then(res => {
+                        if (res.flag) {
+                            this.multipleSelection = [];
+                            this.$message.success('批量完成');
+                            this.getData();
+                        } else {
+                            this.$message.error(res.message)
+                        }
+                    });
+                })
+                .catch(() => {
+                });
             }
         },
         computed: {

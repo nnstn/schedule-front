@@ -18,6 +18,12 @@ const task =  {
             url: '/task/delete/'+id
         });
     },
+    donetask:function (ids) {
+        return request({
+            url: '/task/donetask',
+            data: ids
+        });
+    },
     update:function (data) {
         return request({
             url: '/task/update',
