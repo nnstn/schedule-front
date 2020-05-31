@@ -43,7 +43,21 @@
                     </span>
                 </li>
             </ul>
-
+            <!--与42天日历对应42天任务-->
+            <div class="tablebox2">
+                <div class="row" v-for="(row,index) in scheduleDom" :index="index" >
+                    <table class="scheduletable">
+                        <tr v-for="(line,index) in row" :index="index" >
+                            <td v-for="(td,index) in line" v-bind:colspan="td.colspan" :index="index" >
+                                <div v-if="td.taskName"
+                                     v-bind:class="['s',td.taskType,{'noleftradius':td.noleftradius,'norightradius':td.norightradius}]">
+                                   {{td.taskName}}
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
 
         </div>
     </div>
@@ -69,7 +83,9 @@
                 },
                 weekTitle: ['星期一', '星期二', '星期三', '星期四', '星期五', '星期六', '星期日'],
                 time: {year, month, day},
-                calendarList: []
+                calendarList: [],
+                schedules:{},
+                scheduleDom: {}
             }
         },
         computed : {
@@ -101,12 +117,14 @@
                 // };
 
                 for (let i = 0; i < monthDayNum; i++) {
+                    let date = new Date(startTime + i * 24 * 60 * 60 * 1000);
                     calendatArr.push({
-                        date: new Date(startTime + i * 24 * 60 * 60 * 1000),
-                        year: year,
-                        month: month + 1,
-                        day: new Date(startTime + i * 24 * 60 * 60 * 1000).getDate(),
+                        date: date,
+                        year: date.getFullYear(),
+                        month: date.getMonth(),
+                        day: date.getDate(),
                         clickDay: false,
+                        taskContainer:[]
                     })
                 };
 
@@ -116,8 +134,9 @@
             }
         },
         created() {
-            this.getData();
             this.calendarList = this.visibleCalendar;
+            //计算出本页起始日期,和最终日期，进行日程查询
+            this.getData();
             //this.calendarType = this.options.calendarType;
         },
         methods: {
@@ -164,12 +183,126 @@
                 schedule.fetchData(this.query).then(res => {
                     console.log(res);
                     if (res.flag) {
-                        this.schedule = res.data.items;
+                        this.schedules = res.data.items;
+                        this.calculateSchedule();
                     } else {
                         this.$message.error(res.message)
                     }
 
                 });
+            },
+            calculateSchedule: function () {
+                let schedules = this.schedules
+                let dayarr = this.calendarList
+
+                let domdata = [
+                    [[], [], []],
+                    [[], [], []],
+                    [[], [], []],
+                    [[], [], []],
+                    [[], [], []],
+                    [[], [], []]
+                ]
+                // 遍历 6 个星期
+                for (let rowIndex = 0; rowIndex < 6; rowIndex++) {
+                    let weekarr = dayarr.slice(rowIndex * 7, (rowIndex + 1) * 7) //取底i个星期数据
+                    // 遍历这一周的事情
+                    weekarr.forEach(function (theday, colIndex) {//遍历第i个星期每天任务
+
+                        // 今天的任务
+                        let thedayTasks = []
+                        // 将所有今天发生事情推入今天数组
+                        schedules.forEach(function (task, taskIndex) {
+                            let startYear = new Date(task.startDate).getFullYear();
+                            let startMonth = new Date(task.startDate).getMonth();
+                            let startDate = new Date(task.startDate).getDate();
+
+                            let endYear = new Date(task.endDate).getFullYear();
+                            let endMonth = new Date(task.endDate).getMonth();
+                            let endDate = new Date(task.endDate).getDate();
+                            // let {startYear, startMonth, startDate} = utils.getNewDate(new Date(task.startDate));
+                            // let {endYear, endMonth, endDate} = utils.getNewDate(new Date(task.endDate));
+
+                            //任务持续天数
+                            task.colspan = (new Date(task.endDate) - new Date(task.startDate)) / (1000 * 60 * 60 * 24) + 1
+
+                            if (startYear === theday.year && startMonth === theday.month && startDate === theday.day) {
+                                thedayTasks.push(task)
+                            }
+                            //如果是本月第一天需要做跨月处理
+                            if(rowIndex===0 && colIndex ===0){
+                                console.log("这个是本页左上角")
+                            }
+                        })
+
+                        // 至此我们找到今天所有发生的事情--页面每日最多处理3个任务
+                        for (let line = 0; line < 3; line++) {
+
+                            if (theday.taskContainer.indexOf(line) === -1) {
+                                let schedule = thedayTasks.shift()
+                                if (schedule === undefined) {
+                                    domdata[rowIndex][line].push({})
+                                } else {
+                                    // 将这一天和后colspan天的occupation加入自己的行号
+                                    // if(schedule.colspan&&schedule.colspan!=1){
+                                    let end = colIndex + schedule.colspan
+
+                                    var _end = end >= 7 ? 7 : end
+                                    for (var _i = colIndex + 1; _i < _end; _i++) {
+                                        weekarr[_i].taskContainer.push(line)
+                                    };
+
+                                    domdata[rowIndex][line].push({
+                                        'taskName': schedule.taskName,
+                                        'colspan': (_end - colIndex),
+                                        'taskType': schedule.taskType,
+                                        'noleftradius': false,
+                                        'norightradius': end > 7
+                                    })
+
+                                    let rest = end - 7
+                                    let next = 1
+                                    // 处理下一周事情
+                                    while (rest > 0) {
+                                        let _rest = rest > 7 ? 7 : rest
+                                        var nextweek = dayarr.slice((rowIndex + next) * 7, (rowIndex + next + 1) * 7)
+                                        if (nextweek === undefined || nextweek.length === 0) {
+                                            console.log('任务跨月')
+                                            rest = -1
+                                            continue
+                                        }
+
+                                        for (let _i = 0; _i < _rest; _i++) {
+                                            if (nextweek[_i] === undefined) {
+                                                debugger
+                                            }
+                                            nextweek[_i].taskContainer.push(line)
+                                        }
+                                        domdata[rowIndex + next][line].push({
+                                            'taskName': schedule.taskName,
+                                            'colspan': _rest,
+                                            'taskType': schedule.taskType,
+                                            'noleftradius': true,
+                                            'norightradius': rest > 7
+                                        })
+
+                                        rest = rest - 7
+                                        next++
+                                    }
+                                    // }else{
+                                    //    //当只有一列情况
+                                    //    domdata[rowIndex][line].push({"title":schedule.title,"colspan":schedule.colspan,"type":schedule.type,"noleftradius":false,"norightradius":false});
+                                    // }
+                                }
+                            }
+                        }
+                        while (thedayTasks.length > 0) {
+                            console.log(theday.year + '年' + theday.month + '月' + theday.date + '日:还有未处理的任务:' + thedayTasks.shift().title)
+                        }
+                    })
+                }
+                this.scheduleDom = domdata
+                console.log(this.scheduleDom);
 
             }
         }
@@ -306,5 +439,8 @@
     }
     .calendar-num {
         color: #fff !important;
+    }
+    .tablebox2 {
+        border: black;
     }
 </style>
