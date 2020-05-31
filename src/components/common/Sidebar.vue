@@ -64,10 +64,14 @@ export default {
                 {
                     icon: 'el-icon-date',
                     index: '2',
-                    title: '日程管理',
+                    title: '任务管理',
                     subs: [
                         {
                             index: 'schedule',
+                            title: '日程查看'
+                        },
+                        {
+                            index: 'calender',
                             title: '日程查看'
                         },
                         {

@@ -11,104 +11,155 @@
 
         <div class="container">
             <div class="calendar-header clear">
-                <div class="calendar-box" v-if="this.headOptions.type == 'combination'">
-                    <div class="calendar-content" :style="{'text-align': this.headStyle.combination}">
+                <div class="calendar-box">
+                    <div class="calendar-content" style="text-align: center">
                         <span class="calendar-prev" @click="handlePrevMonth"></span>
                         <span class="calendar-headDate"> {{this.headOptions.date}} </span>
                         <span class="calendar-next" @click="handleNextMonth"></span>
                     </div>
                     <span class="calendar-today" @click="handleToday()"> 今天 </span>
                 </div>
-                <div class="calendar-box" v-else>
-                    <span class="calendar-headDate"> {{this.headOptions.date}} </span>
-                    <span class="calendar-today dispersion-today" :style="{float: this.headStyle.todayBtn}" @click="handleToday()"> 今天 </span>
-                    <div class="calendar-content dispersion" :style="{float: this.headStyle.checkBtn}">
-                        <span class="calendar-prev" @click="handlePrevMonth"></span>
-                        <span class="calendar-next" @click="handleNextMonth"></span>
-                    </div>
-
-                </div>
             </div>
+            <ul class="calendar-week clear">
+                <li v-for="(item, index) in weekTitle" :key="index" class="week-item">{{item}}</li>
+            </ul>
+
+            <!--42天日历-->
+            <ul class="calendar-view clear">
+                <li v-for="(item, index) in visibleCalendar"
+                    :key="index"
+                    class="date-view"
+                    :class="[
+                              {'month-class': !isCurrentMonth(item.date)},
+                              {todayBg: isCurrentDay(item.date)},
+                              {handleDay: item.clickDay}
+                            ]"
+                    @click="handleClickDay(item)">
+
+                    <span class="date-day"
+                          :style="dayStyle"
+                          :class="[{'opacity-class': !isCurrentMonth(item.date)}]">
+                      {{item.day}}
+                    </span>
+                </li>
+            </ul>
 
 
-            <div class="cc-calendar">
-                <calendarHeader
-                        :headOptions="headOptions"
-                        @handlePrevMonth = 'handlePrevMonth'
-                        @handleNextMonth = 'handleNextMonth'
-                        @handleToday = 'handleToday'
-                />
-                <ul class="calendar-week clear">
-                    <li v-for="(item, index) in calendarTitleArr" :key="index" class="week-item">{{item}}</li>
-                </ul>
-                <ul class="calendar-view clear">
-                    <li v-for="(item, index) in visibleCalendar"
-                        :key="index"
-                        class="date-view"
-                        :class="[
-          {'month-class': !isCurrentMonth(item.date)},
-          {todayBg: isCurrentDay(item.date)},
-          {handleDay: item.clickDay}
-        ]"
-                        @click="handleClickDay(item)"
-                    >
-        <span class="date-day"
-              :style="dayStyle"
-              :class="[{'opacity-class': !isCurrentMonth(item.date)}]"
-        >
-          {{item.day}}
-        </span>
-                        <span class="calendar-num">
-          {{item.calendarNum}}
-        </span>
-                    </li>
-                </ul>
-            </div>
-
-            <div class="handle-box">
-                <el-input v-model="query.key2" placeholder="任务归属" class="handle-input mr10"></el-input>
-                <el-date-picker
-                        v-model="query.month"
-                        type="month"
-                        value-format="yyyy-MM"
-                        placeholder="选择月">
-                </el-date-picker>
-                <el-button type="primary" icon="el-icon-search" @click="handleSearch">搜索</el-button>
-            </div>
         </div>
-
     </div>
 </template>
 
 <script>
     import schedule from '../../../api/schedule';
+    import * as utils from '../../../utils/utils';
 
     export default {
         name: 'Schedule',
         data() {
+            //获取当前日期
+            let {year, month, day} = utils.getNewDate(new Date());
             return {
-                headStyle: '',
-                headOptions: Object,
-                query: {
-                    tasker: '',
-                    month: ''
+                headOptions: {
+                    style: {
+                        todayBtn: 'right',
+                        combination: 'center',
+                        checkBtn: 'right',
+                    },
+                    date: '',
                 },
-                year: 2018,
-                month: 5,
-                date: 1,
-                schedule: {},
-                // 中文汉字星期名称
                 weekTitle: ['星期一', '星期二', '星期三', '星期四', '星期五', '星期六', '星期日'],
-                // 本月日期构成，先用二维数组
-                dateArr: [],
-                day: {},
-                domdata: []
+                time: {year, month, day},
+                calendarList: []
+            }
+        },
+        computed : {
+            dayStyle : function () {
+                return {
+                    textAlign: 'right',
+                }
+            },
+            visibleCalendar () {
+                let calendatArr = [];
+
+                let {year, month, day} = utils.getNewDate(utils.getDate(this.time.year, this.time.month, 1));
+
+                let currentFirstDay = utils.getDate(year, month, 1);
+
+                // 获取当前月第一天星期几
+                let weekDay = currentFirstDay.getDay();
+                console.log(weekDay)
+                //表格的起始时间
+                let startTime = currentFirstDay - (weekDay - 1) * 24 * 60 * 60 * 1000;
+
+                // 为了布局一直均取42天为一个单元月
+                let monthDayNum = 42;
+                // if (weekDay == 5 || weekDay == 6){
+                //     monthDayNum = 42
+                // }else {
+                //     debugger;
+                //     monthDayNum = 35
+                // };
+
+                for (let i = 0; i < monthDayNum; i++) {
+                    calendatArr.push({
+                        date: new Date(startTime + i * 24 * 60 * 60 * 1000),
+                        year: year,
+                        month: month + 1,
+                        day: new Date(startTime + i * 24 * 60 * 60 * 1000).getDate(),
+                        clickDay: false,
+                    })
+                };
+
+                this.headOptions.date = `${utils.englishMonth(month)} ${year}`;
+                console.log(calendatArr);
+                return calendatArr
             }
         },
         created() {
             this.getData();
+            this.calendarList = this.visibleCalendar;
+            //this.calendarType = this.options.calendarType;
         },
         methods: {
+            // 是否是当前月
+            isCurrentMonth (date) {
+                let {year: currentYear, month: currentMonth} = utils.getNewDate(utils.getDate(this.time.year, this.time.month, 1));
+                let {year, month} = utils.getNewDate(date);
+                return currentYear == year && currentMonth == month
+            },
+            // 是否是今天
+            isCurrentDay (date) {
+                let {year: currentYear, month: currentMonth, day: currentDay} = utils.getNewDate(new Date());
+                let {year, month, day} = utils.getNewDate(date);
+                return currentYear == year && currentMonth == month && currentDay == day;
+            },
+            // 上一个月
+            handlePrevMonth () {
+                let prevMonth = utils.getDate(this.time.year,this.time.month,1);
+                prevMonth.setMonth(prevMonth.getMonth() - 1);
+                this.time = utils.getNewDate(prevMonth);
+                this.headOptions.date = `${utils.englishMonth(this.time.month)} ${this.time.year}`;
+            },
+            // 下一个月
+            handleNextMonth () {
+                let nextMonth = utils.getDate(this.time.year,this.time.month,1);
+                nextMonth.setMonth(nextMonth.getMonth() + 1);
+                this.time = utils.getNewDate(nextMonth);
+                this.headOptions.date = `${utils.englishMonth(this.time.month)} ${this.time.year}`;
+            },
+            // 点击回到今天
+            handleToday () {
+                this.time = utils.getNewDate(new Date());
+            },
+            // 点击某一天
+            handleClickDay (item) {
+                this.$forceUpdate();
+                this.calendarList.map( x => {
+                    x.clickDay = false;
+                });
+                this.$set(item, 'clickDay', true);
+            },
+
             getData() {
                 schedule.fetchData(this.query).then(res => {
                     console.log(res);
@@ -120,39 +171,39 @@
 
                 });
 
-            },
-            // 上一个月
-            handlePrevMonth () {
-                //this.$emit('handlePrevMonth');
-            },
-            // 下一个月
-            handleNextMonth () {
-                //this.$emit('handleNextMonth');
-            },
-            // 回到今天
-            handleToday () {
-                //this.$emit('handleToday');
-            },
-            handleSearch () {
-
             }
-        },
-        computed: {}
+        }
     }
 </script>
 
 <style scoped>
+    body, h1, h2, h3, h4, h5, h6, hr, p, blockquote, dl, dt, dd, ul, ol, li, button, input, textarea, th, td, span {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+    ul, ol {
+        list-style: none
+    }
+    .clear:after {
+        display: block;
+        height: 0;
+        content: "";
+        clear: both
+    }
     .calendar-header {
-        margin-bottom: 23px;
+        margin-bottom: 13px;
         width: 100%;
+    }
     .calendar-box {
         position: relative;
         height: 32px;
         line-height: 32px;
+    }
     .calendar-content {
         width: 100%;
-    .calendar-prev,
-    .calendar-next {
+    }
+    .calendar-prev {
         display: inline-block;
         vertical-align: middle;
         width: 8px;
@@ -162,14 +213,15 @@
         cursor: pointer;
     }
     .calendar-next {
+        display: inline-block;
+        vertical-align: middle;
+        width: 8px;
+        height: 11px;
         background: url('../../../assets/img/right.png') no-repeat;
         background-size: contain;
+        cursor: pointer;
     }
-    }
-    .dispersion{
-        width: initial;
-        display: inline;
-    }
+
     .calendar-headDate {
         vertical-align: middle;
         margin: 0 12px;
@@ -181,7 +233,7 @@
         -ms-user-select: none;
         user-select: none;
     }
-    .calendar-today {
+    .calendar-header .calendar-box .calendar-today {
         position: absolute;
         top: 0;
         right: 0;
@@ -194,18 +246,65 @@
         color: #2061FF;
         cursor: pointer;
     }
-    .dispersion-today{
-        position: inherit;
+
+    .calendar-week {
+        width: 100%;
+        height: 46px;
+        line-height: 46px;
+        border: 1px solid #E4E7EA;
+        border-right: none;
     }
-    .calendar-center {
-        margin: 0 auto;
-    }
-    .calendar-left {
+    .week-item {
         float: left;
+        width: 14.285%;
+        text-align: center;
+        font-size: 14px;
+        color: #424953;
+        border-right: 1px solid #E4E7EA;
+        font-weight: 600;
     }
-    .calendar-right {
-        float: right;
+    .calendar-view {
+        width: 100%;
+        border-left: 1px solid #E4E7EA;
     }
+    .date-view {
+        float: left;
+        width: 14.285%;
+        height: 120px;
+        border-right: 1px solid #E4E7EA;
+        border-bottom: 1px solid #E4E7EA;
+        cursor: pointer;
     }
+    .date-day {
+        padding: 8px 8px 0;
+        display: block;
+        width: 100%;
+        font-size: 14px;
+        color: black !important;
+    }
+    .calendar-num {
+        margin-top: 6px;
+        display: block;
+        width: 100%;
+        text-align: center;
+        font-size: 30px;
+        color: #424953;
+    }
+    .opacity-class {
+        opacity: .5;
+    }
+    .month-class {
+        background-image: linear-gradient(45deg,rgba(000, 000, 000, .03) 25%,transparent 25%,transparent 50%,rgba(000, 000, 000, .03) 50%,rgba(000, 000, 000, .03) 75%,transparent 75%,transparent);
+        background-size: 20px 20px;
+    }
+    .todayBg {
+        background: #FCF8E3;
+    }
+    /*点击日期样式*/
+    .handleDay {
+        background: #2061FF !important;
+    }
+    .calendar-num {
+        color: #fff !important;
     }
 </style>

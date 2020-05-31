@@ -15,9 +15,17 @@
                 </el-button>
                 <el-input v-model="query.taskName" placeholder="任务名称" class="handle-input mr10"></el-input>
                 <el-input v-model="query.tasker" placeholder="任务归属" class="handle-input mr10"></el-input>
+                <el-date-picker class="handle-select mr10"
+                        v-model="query.month"
+                        type="month"
+                        value-format="yyyy-MM"
+                        placeholder="选择月">
+                </el-date-picker>
                 <el-button type="primary" icon="el-icon-search" @click="handleSearch">搜索</el-button>
                 <el-button type="primary" icon="el-icon-refresh-left" @click="handleReset">重置</el-button>
                 <el-button type="primary" icon="el-icon-plus" @click="openInsert">新增</el-button>
+                <el-button type="primary" icon="el-icon-download" @click="openInsert">导入</el-button>
+                <el-button type="primary" icon="el-icon-upload2" @click="openInsert">导出</el-button>
             </div>
             <el-table
                     :data="tableData"
