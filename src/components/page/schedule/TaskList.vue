@@ -150,12 +150,12 @@
         data() {
             return {
                 taskTypes: [
-                    {value: '开发编码', label: '开发编码'},
-                    {value: '会议讨论', label: '会议讨论'},
-                    {value: '设计相关', label: '设计相关'},
-                    {value: '文档编写', label: '文档编写'},
-                    {value: 'bug处理', label: 'bug处理'},
-                    {value: '环境部署', label: '环境部署'}
+                    {value: '1', label: '开发编码'},
+                    {value: '2', label: '会议讨论'},
+                    {value: '3', label: '设计相关'},
+                    {value: '4', label: '文档编写'},
+                    {value: '5', label: 'bug处理'},
+                    {value: '6', label: '环境部署'}
                 ],
                 noticeTypes: [
                     {value: '1', label: '不提醒'},

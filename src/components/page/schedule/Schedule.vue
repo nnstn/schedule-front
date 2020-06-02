@@ -27,10 +27,12 @@
             <ul class="calendar-week clear">
                 <li v-for="(item, index) in weekTitle" :key="index" class="week-item">{{item}}</li>
             </ul>
+<!--            let weekarr = dayarr.slice(rowIndex * 7, (rowIndex + 1) * 7)-->
+
 
             <!--42天日历-->
-            <ul class="calendar-view clear">
-                <li v-for="(item, index) in visibleCalendar"
+            <ul class="calendar-view clear" v-for="count in 6">
+                <li v-for="(item, index) in calendarList.slice((count -1)* 7, (count) * 7)"
                     :key="index"
                     class="date-view"
                     :class="[
@@ -312,6 +314,7 @@
                             }
                         }
                         while (thedayTasks.length > 0) {
+                            console.log("每日工作不要超过4个，你干不过来")
                             console.log(theday.year + '年' + theday.month + '月' + theday.day + '日:还有未处理的任务:' + thedayTasks.shift().taskName)
                         }
                     })
