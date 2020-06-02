@@ -244,6 +244,7 @@
                             if(rowIndex===0 && colIndex ===0){
                                 if(new Date(task.startDate) < dayarr[0].date){
                                     console.log("跨页任务")
+                                    task.colspan = (new Date(task.endDate) - dayarr[0].date) / (1000 * 60 * 60 * 24) + 1
                                     thedayTasks.push(task)
                                 }
                             }
@@ -270,7 +271,7 @@
                                         'taskName': schedule.taskName,
                                         'colspan': (_end - colIndex),
                                         'taskType': schedule.taskType,
-                                        'noleftradius': false,
+                                        'noleftradius': dayarr[0].date > new Date(schedule.startDate),
                                         'norightradius': end > 7
                                     })
 
