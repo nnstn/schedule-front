@@ -12,6 +12,10 @@
         <div class="container">
             <div class="calendar-header clear">
                 <div class="calendar-box">
+                    <div class="search-box">
+                        <el-input  placeholder="名称" class="handle-input mr10"></el-input>
+                        <el-button type="primary" icon="el-icon-search" >搜索</el-button>
+                    </div>
                     <div class="calendar-content" style="text-align: center">
                         <span class="calendar-prev" @click="handlePrevMonth"></span>
                         <span class="calendar-headDate"> {{this.headOptions.date}} </span>
@@ -54,6 +58,15 @@
                                    {{td.taskName}}
                                 </div>
                             </td>
+                        </tr>
+                        <tr style="height:1px;">
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
                         </tr>
                     </table>
                 </div>
@@ -103,7 +116,6 @@
 
                 // 获取当前月第一天星期几
                 let weekDay = currentFirstDay.getDay();
-                console.log(weekDay)
                 //表格的起始时间
                 let startTime = currentFirstDay - (weekDay - 1) * 24 * 60 * 60 * 1000;
 
@@ -129,7 +141,6 @@
                 };
 
                 this.headOptions.date = `${utils.englishMonth(month)} ${year}`;
-                console.log(calendatArr);
                 return calendatArr
             }
         },
@@ -196,18 +207,18 @@
                 let dayarr = this.calendarList
 
                 let domdata = [
-                    [[], [], []],
-                    [[], [], []],
-                    [[], [], []],
-                    [[], [], []],
-                    [[], [], []],
-                    [[], [], []]
+                    [[], [], [],[]],
+                    [[], [], [],[]],
+                    [[], [], [],[]],
+                    [[], [], [],[]],
+                    [[], [], [],[]],
+                    [[], [], [],[]]
                 ]
                 // 遍历 6 个星期
                 for (let rowIndex = 0; rowIndex < 6; rowIndex++) {
                     let weekarr = dayarr.slice(rowIndex * 7, (rowIndex + 1) * 7) //取底i个星期数据
                     // 遍历这一周的事情
-                    weekarr.forEach(function (theday, colIndex) {//遍历第i个星期每天任务
+                    weekarr.forEach(function (theday, colIndex) { // 第rowIndex 个星期每天任务 第 colIndex 天
 
                         // 今天的任务
                         let thedayTasks = []
@@ -231,12 +242,15 @@
                             }
                             //如果是本月第一天需要做跨月处理
                             if(rowIndex===0 && colIndex ===0){
-                                console.log("这个是本页左上角")
+                                if(new Date(task.startDate) < dayarr[0].date){
+                                    console.log("跨页任务")
+                                    thedayTasks.push(task)
+                                }
                             }
                         })
 
                         // 至此我们找到今天所有发生的事情--页面每日最多处理3个任务
-                        for (let line = 0; line < 3; line++) {
+                        for (let line = 0; line < 4; line++) {
 
                             if (theday.taskContainer.indexOf(line) === -1) {
                                 let schedule = thedayTasks.shift()
@@ -267,14 +281,14 @@
                                         let _rest = rest > 7 ? 7 : rest
                                         var nextweek = dayarr.slice((rowIndex + next) * 7, (rowIndex + next + 1) * 7)
                                         if (nextweek === undefined || nextweek.length === 0) {
-                                            console.log('任务跨月')
+                                            console.log('任务跨页不用处理。需重新查询')
                                             rest = -1
                                             continue
                                         }
 
                                         for (let _i = 0; _i < _rest; _i++) {
                                             if (nextweek[_i] === undefined) {
-                                                debugger
+                                                debugger;
                                             }
                                             nextweek[_i].taskContainer.push(line)
                                         }
@@ -297,12 +311,13 @@
                             }
                         }
                         while (thedayTasks.length > 0) {
-                            console.log(theday.year + '年' + theday.month + '月' + theday.date + '日:还有未处理的任务:' + thedayTasks.shift().title)
+                            console.log(theday.year + '年' + theday.month + '月' + theday.day + '日:还有未处理的任务:' + thedayTasks.shift().taskName)
                         }
                     })
                 }
                 this.scheduleDom = domdata
                 console.log(this.scheduleDom);
+                console.log(this.calendarList);
 
             }
         }
@@ -317,6 +332,13 @@
     }
     ul, ol {
         list-style: none
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .container{
+        position:relative;
     }
     .clear:after {
         display: block;
@@ -339,8 +361,8 @@
     .calendar-prev {
         display: inline-block;
         vertical-align: middle;
-        width: 8px;
-        height: 11px;
+        width: 20px;
+        height: 20px;
         background: url('../../../assets/img/left.png') no-repeat;
         background-size: contain;
         cursor: pointer;
@@ -348,14 +370,16 @@
     .calendar-next {
         display: inline-block;
         vertical-align: middle;
-        width: 8px;
-        height: 11px;
+        width: 20px;
+        height: 20px;
         background: url('../../../assets/img/right.png') no-repeat;
         background-size: contain;
         cursor: pointer;
     }
 
     .calendar-headDate {
+        width:20%;
+        display:inline-block;
         vertical-align: middle;
         margin: 0 12px;
         font-size: 18px;
@@ -373,11 +397,13 @@
         width: 80px;
         height: 30px;
         text-align: center;
-        border: 1px solid #2061FF;
         border-radius: 4px;
         font-size: 14px;
         color: #2061FF;
         cursor: pointer;
+        background:#eea236;
+        color:#fff;
+        float:right;
     }
 
     .calendar-week {
@@ -440,7 +466,75 @@
     .calendar-num {
         color: #fff !important;
     }
+
+    /*日程部分样式*/
     .tablebox2 {
-        border: black;
+        position: absolute;
+        top: 120px;
+        width: 96%;
+        height: 720px;
+    }
+
+    .tablebox2 .row {
+        padding-top: 30px;
+        height: 120px;
+        box-sizing: border-box;
+    }
+
+    .tablebox2 .row .scheduletable {
+
+        width: 100%;
+        height: 70px;
+    }
+
+    .tablebox2 .row .scheduletable tr {
+        height: 20px;
+        width: 100%;
+    }
+
+    .tablebox2 .row .scheduletable tr td {
+        width: 14.2857%;
+        padding: 0 2px;
+        box-sizing: border-box;
+    }
+
+    .tablebox2 .row .scheduletable tr td .s {
+        border-radius: 15px;
+        font-size: 12px;
+        height: 20px;
+        line-height: 20px;
+        padding-left: 10px;
+        margin-top:2px;
+    }
+
+    .tablebox2 .row .scheduletable tr td .s.norightradius {
+        border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
+    }
+
+    .tablebox2 .row .scheduletable tr td .s.noleftradius {
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+    }
+
+    .tablebox2 .row .scheduletable tr td .s.life {
+        background: -webkit-linear-gradient(left, #d9edf7, #1089c5);
+    }
+    .tablebox2 .row .scheduletable tr td .s.work {
+        background: -webkit-linear-gradient(left, #dff0d8, #30ab32);
+    }
+    .tablebox2 .row .scheduletable tr td .s.happy{
+        background: -webkit-linear-gradient(left, #fcf8e3, #efb553);
+    }
+    .tablebox2 .row .scheduletable tr td .s.important {
+        background: -webkit-linear-gradient(left, #f2dede, #d03d3b);
+    }
+
+    .handle-input {
+        width: 100px;
+        display: inline-block;
+    }
+    .search-box{
+        float:left;
     }
 </style>
