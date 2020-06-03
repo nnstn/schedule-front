@@ -80,6 +80,7 @@
 
 <script>
     import schedule from '../../../api/schedule';
+    import task from '../../../api/task';
     import * as utils from '../../../utils/utils';
 
     export default {
@@ -96,6 +97,12 @@
                     },
                     date: '',
                 },
+                query: {
+                    startTime:'',
+                    endTime:'',
+                    tasker: ''
+                },
+
                 weekTitle: ['星期一', '星期二', '星期三', '星期四', '星期五', '星期六', '星期日'],
                 time: {year, month, day},
                 calendarList: [],
@@ -143,14 +150,19 @@
                 };
 
                 this.headOptions.date = `${utils.englishMonth(month)} ${year}`;
+
                 return calendatArr
             }
         },
         created() {
             this.calendarList = this.visibleCalendar;
             //计算出本页起始日期,和最终日期，进行日程查询
+
+            this.query.startTime=this.calendarList[0].date;
+            this.query.endTime=this.calendarList[41].date;
+            this.query.tasker=localStorage.getItem('ms_username');
+
             this.getData();
-            //this.calendarType = this.options.calendarType;
         },
         methods: {
             // 是否是当前月
@@ -193,10 +205,10 @@
             },
 
             getData() {
-                schedule.fetchData(this.query).then(res => {
+                task.schedule(this.query).then(res => {
                     console.log(res);
                     if (res.flag) {
-                        this.schedules = res.data.items;
+                        this.schedules = res.data;
                         this.calculateSchedule();
                     } else {
                         this.$message.error(res.message)
@@ -216,6 +228,15 @@
                     [[], [], [],[]],
                     [[], [], [],[]]
                 ]
+                let colorMap = {
+                    1:'green',
+                    2:'blue',
+                    3:'orange',
+                    4:'red',
+                    5:'red2',
+                    6:'red3'
+                }
+
                 // 遍历 6 个星期
                 for (let rowIndex = 0; rowIndex < 6; rowIndex++) {
                     let weekarr = dayarr.slice(rowIndex * 7, (rowIndex + 1) * 7) //取底i个星期数据
@@ -272,7 +293,7 @@
                                     domdata[rowIndex][line].push({
                                         'taskName': schedule.taskName,
                                         'colspan': (_end - colIndex),
-                                        'taskType': schedule.taskType,
+                                        'taskType': colorMap[schedule.taskType],
                                         'noleftradius': dayarr[0].date > new Date(schedule.startDate),
                                         'norightradius': end > 7
                                     })
@@ -298,7 +319,7 @@
                                         domdata[rowIndex + next][line].push({
                                             'taskName': schedule.taskName,
                                             'colspan': _rest,
-                                            'taskType': schedule.taskType,
+                                            'taskType': colorMap[schedule.taskType],
                                             'noleftradius': true,
                                             'norightradius': rest > 7
                                         })
@@ -306,10 +327,6 @@
                                         rest = rest - 7
                                         next++
                                     }
-                                    // }else{
-                                    //    //当只有一列情况
-                                    //    domdata[rowIndex][line].push({"title":schedule.title,"colspan":schedule.colspan,"type":schedule.type,"noleftradius":false,"norightradius":false});
-                                    // }
                                 }
                             }
                         }
@@ -322,8 +339,8 @@
                 this.scheduleDom = domdata
                 console.log(this.scheduleDom);
                 console.log(this.calendarList);
-
             }
+
         }
     }
 </script>
@@ -521,16 +538,22 @@
         border-bottom-left-radius: 0;
     }
 
-    .tablebox2 .row .scheduletable tr td .s.life {
-        background: -webkit-linear-gradient(left, #d9edf7, #1089c5);
-    }
-    .tablebox2 .row .scheduletable tr td .s.work {
+    .tablebox2 .row .scheduletable tr td .s.green {
         background: -webkit-linear-gradient(left, #dff0d8, #30ab32);
     }
-    .tablebox2 .row .scheduletable tr td .s.happy{
+    .tablebox2 .row .scheduletable tr td .s.blue {
+        background: -webkit-linear-gradient(left, #d9edf7, #1089c5);
+    }
+    .tablebox2 .row .scheduletable tr td .s.orange{
         background: -webkit-linear-gradient(left, #fcf8e3, #efb553);
     }
-    .tablebox2 .row .scheduletable tr td .s.important {
+    .tablebox2 .row .scheduletable tr td .s.red {
+        background: -webkit-linear-gradient(left, #f2dede, #d03d3b);
+    }
+    .tablebox2 .row .scheduletable tr td .s.red2 {
+        background: -webkit-linear-gradient(left, #f2dede, #d03d3b);
+    }
+    .tablebox2 .row .scheduletable tr td .s.red3 {
         background: -webkit-linear-gradient(left, #f2dede, #d03d3b);
     }
 

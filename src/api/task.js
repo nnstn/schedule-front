@@ -29,6 +29,12 @@ const task =  {
             url: '/task/update',
             data: data
         });
+    },
+    schedule:function (data) {
+        return request({
+            url: '/task/schedule',
+            data: data
+        });
     }
 }
 

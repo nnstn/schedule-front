@@ -41,12 +41,11 @@
                 <el-table-column prop="tasker"    label="任务归属"></el-table-column>
                 <el-table-column prop="startDate" label="开始时间"></el-table-column>
                 <el-table-column prop="endDate"   label="结束时间"></el-table-column>
-                <el-table-column prop="taskType"  label="任务类型"></el-table-column>
+                <el-table-column prop="taskType"  label="任务类型"  :formatter="getTaskType"></el-table-column>
                 <el-table-column label="任务状态" align="center">
                     <template slot-scope="scope">
                         <el-tag :type="scope.row.state==3?'success':(scope.row.state==2?'danger':'warning')">
-                        {{scope.row.state===3?'完成':(scope.row.state===2?'进行中':'新增')}}
-                            {{scope.row.state}}
+                        {{scope.row.state===3?'完成':(scope.row.state===2?'处理中':'新增')}}
                         </el-tag>
                     </template>
                 </el-table-column>
@@ -150,16 +149,16 @@
         data() {
             return {
                 taskTypes: [
-                    {value: '1', label: '开发编码'},
-                    {value: '2', label: '会议讨论'},
-                    {value: '3', label: '设计相关'},
-                    {value: '4', label: '文档编写'},
-                    {value: '5', label: 'bug处理'},
-                    {value: '6', label: '环境部署'}
+                    {value: 1, label: '开发编码'},
+                    {value: 2, label: '会议讨论'},
+                    {value: 3, label: '设计相关'},
+                    {value: 4, label: '文档编写'},
+                    {value: 5, label: 'bug处理'},
+                    {value: 6, label: '环境部署'}
                 ],
                 noticeTypes: [
-                    {value: '1', label: '不提醒'},
-                    {value: '2', label: '提醒'}
+                    {value: 1, label: '不提醒'},
+                    {value: 2, label: '提醒'}
                 ],
                 query: {
                     taskName: '',
@@ -223,10 +222,10 @@
                 this.dialogFlag='add';
                 this.task = {
                     taskName:'',         //任务名称
-                    taskType: '开发编码', //任务类型：默认为开发任务
-                    noticeType: '1',     //任务提醒：默认不提醒
+                    taskType: 1, //任务类型：默认为开发任务
+                    noticeType: 1,     //任务提醒：默认不提醒
                     topping: "false",    //是否置顶
-                    state: "1"           //任务状态
+                    state: 1           //任务状态
                 }
                 this.scheduleVisible = true;
                 this.$nextTick(() => {
@@ -358,6 +357,9 @@
                 })
                 .catch(() => {
                 });
+            },
+            getTaskType(row, column){
+                return this.taskTypes[row.taskType-1].label;
             }
         },
         computed: {
