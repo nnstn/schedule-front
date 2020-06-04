@@ -71,10 +71,6 @@ export default {
                             title: '日程查看'
                         },
                         {
-                            index: 'calender',
-                            title: '日程查看'
-                        },
-                        {
                             index: 'taskList',
                             title: '任务列表'
                         }

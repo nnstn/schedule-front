@@ -30,11 +30,6 @@ export default new Router({
                     meta: { title: '任务列表' }
                 },
                 {
-                    path: '/calender',
-                    component: () => import(/* webpackChunkName: "dashboard" */ '../components/page/schedule/Calender.vue'),
-                    meta: { title: '日历组件' }
-                },
-                {
                     path: '/icon',
                     component: () => import(/* webpackChunkName: "icon" */ '../components/page/Icon.vue'),
                     meta: { title: '自定义图标' }

@@ -130,12 +130,6 @@
 
                 // 为了布局一直均取42天为一个单元月
                 let monthDayNum = 42;
-                // if (weekDay == 5 || weekDay == 6){
-                //     monthDayNum = 42
-                // }else {
-                //     debugger;
-                //     monthDayNum = 35
-                // };
 
                 for (let i = 0; i < monthDayNum; i++) {
                     let date = new Date(startTime + i * 24 * 60 * 60 * 1000);
@@ -150,16 +144,13 @@
                 };
 
                 this.headOptions.date = `${utils.englishMonth(month)} ${year}`;
-
+                debugger
                 return calendatArr
             }
         },
         created() {
             this.calendarList = this.visibleCalendar;
             //计算出本页起始日期,和最终日期，进行日程查询
-
-            this.query.startTime=this.calendarList[0].date;
-            this.query.endTime=this.calendarList[41].date;
             this.query.tasker=localStorage.getItem('ms_username');
 
             this.getData();
@@ -183,6 +174,10 @@
                 prevMonth.setMonth(prevMonth.getMonth() - 1);
                 this.time = utils.getNewDate(prevMonth);
                 this.headOptions.date = `${utils.englishMonth(this.time.month)} ${this.time.year}`;
+
+                this.query.startTime=this.calendarList[0].date;
+                this.query.endTime=this.calendarList[41].date;
+                this.getData();
             },
             // 下一个月
             handleNextMonth () {
@@ -190,10 +185,17 @@
                 nextMonth.setMonth(nextMonth.getMonth() + 1);
                 this.time = utils.getNewDate(nextMonth);
                 this.headOptions.date = `${utils.englishMonth(this.time.month)} ${this.time.year}`;
+
+                this.query.startTime=this.calendarList[0].date;
+                this.query.endTime=this.calendarList[41].date;
+                this.getData();
             },
             // 点击回到今天
             handleToday () {
                 this.time = utils.getNewDate(new Date());
+                this.query.startTime=this.calendarList[0].date;
+                this.query.endTime=this.calendarList[41].date;
+                this.getData();
             },
             // 点击某一天
             handleClickDay (item) {
@@ -206,7 +208,6 @@
 
             getData() {
                 task.schedule(this.query).then(res => {
-                    console.log(res);
                     if (res.flag) {
                         this.schedules = res.data;
                         this.calculateSchedule();
@@ -247,15 +248,9 @@
                         let thedayTasks = []
                         // 将所有今天发生事情推入今天数组
                         schedules.forEach(function (task, taskIndex) {
-                            let startYear = new Date(task.startDate).getFullYear();
-                            let startMonth = new Date(task.startDate).getMonth();
-                            let startDate = new Date(task.startDate).getDate();
 
-                            let endYear = new Date(task.endDate).getFullYear();
-                            let endMonth = new Date(task.endDate).getMonth();
-                            let endDate = new Date(task.endDate).getDate();
-                            // let {startYear, startMonth, startDate} = utils.getNewDate(new Date(task.startDate));
-                            // let {endYear, endMonth, endDate} = utils.getNewDate(new Date(task.endDate));
+                            let {year: startYear,month:  startMonth, day:startDate} = utils.getNewDate(new Date(task.startDate));
+                            let {year: endYear,month:  endMonth,day: endDate} = utils.getNewDate(new Date(task.endDate));
 
                             //任务持续天数
                             task.colspan = (new Date(task.endDate) - new Date(task.startDate)) / (1000 * 60 * 60 * 24) + 1
@@ -337,8 +332,6 @@
                     })
                 }
                 this.scheduleDom = domdata
-                console.log(this.scheduleDom);
-                console.log(this.calendarList);
             }
 
         }
@@ -558,10 +551,18 @@
     }
 
     .handle-input {
-        width: 100px;
+        width:100px;
         display: inline-block;
     }
     .search-box{
         float:left;
+
     }
+    .search-box button{
+        float: right;
+        height: 32px;
+        padding: 0px 4px;
+        margin-left: 4px;
+    }
+
 </style>
