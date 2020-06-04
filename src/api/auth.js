@@ -7,11 +7,15 @@ const auth =  {
             data: data
         });
     },
-    register:function () {
+    register:function (user) {
         return request({
             url: '/auth/register',
-            method: 'post',
-            params: query
+            data: user
+        });
+    },
+    checklogin:function () {
+        return request({
+            url: '/auth/checklogin'
         });
     }
 }

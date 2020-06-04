@@ -50,6 +50,7 @@
 </template>
 <script>
 import bus from '../common/bus';
+import auth from '../../api/auth';
 export default {
     data() {
         return {
@@ -110,6 +111,14 @@ export default {
         if (document.body.clientWidth < 1500) {
             this.collapseChage();
         }
+    },
+    created() {
+        auth.checklogin().then((data) => {
+            if (!data.flag) {
+                localStorage.removeItem('ms_username')
+                this.$router.push('/login')
+            }
+        })
     }
 };
 </script>

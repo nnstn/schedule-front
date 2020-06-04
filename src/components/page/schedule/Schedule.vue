@@ -13,8 +13,8 @@
             <div class="calendar-header clear">
                 <div class="calendar-box">
                     <div class="search-box">
-                        <el-input  placeholder="名称" class="handle-input mr10"></el-input>
-                        <el-button type="primary" icon="el-icon-search" >搜索</el-button>
+                        <el-input  placeholder="名称" class="handle-input mr10" v-model="query.tasker"></el-input>
+                        <el-button type="primary" icon="el-icon-search" @click="handleSearch">搜索&nbsp;&nbsp;</el-button>
                     </div>
                     <div class="calendar-content" style="text-align: center">
                         <span class="calendar-prev" @click="handlePrevMonth"></span>
@@ -31,8 +31,8 @@
 
 
             <!--42天日历-->
-            <ul class="calendar-view clear" v-for="count in 6">
-                <li v-for="(item, index) in calendarList.slice((count -1)* 7, (count) * 7)"
+            <ul class="calendar-view clear">
+                <li v-for="(item, index) in visibleCalendar"
                     :key="index"
                     class="date-view"
                     :class="[
@@ -144,14 +144,16 @@
                 };
 
                 this.headOptions.date = `${utils.englishMonth(month)} ${year}`;
-                debugger
                 return calendatArr
             }
         },
         created() {
             this.calendarList = this.visibleCalendar;
+
             //计算出本页起始日期,和最终日期，进行日程查询
             this.query.tasker=localStorage.getItem('ms_username');
+            this.query.startTime=this.visibleCalendar[0].date;
+            this.query.endTime=this.visibleCalendar[41].date;
 
             this.getData();
         },
@@ -175,8 +177,8 @@
                 this.time = utils.getNewDate(prevMonth);
                 this.headOptions.date = `${utils.englishMonth(this.time.month)} ${this.time.year}`;
 
-                this.query.startTime=this.calendarList[0].date;
-                this.query.endTime=this.calendarList[41].date;
+                this.query.startTime=this.visibleCalendar[0].date;
+                this.query.endTime=this.visibleCalendar[41].date;
                 this.getData();
             },
             // 下一个月
@@ -186,15 +188,18 @@
                 this.time = utils.getNewDate(nextMonth);
                 this.headOptions.date = `${utils.englishMonth(this.time.month)} ${this.time.year}`;
 
-                this.query.startTime=this.calendarList[0].date;
-                this.query.endTime=this.calendarList[41].date;
+                this.query.startTime=this.visibleCalendar[0].date;
+                this.query.endTime=this.visibleCalendar[41].date;
                 this.getData();
             },
             // 点击回到今天
             handleToday () {
                 this.time = utils.getNewDate(new Date());
-                this.query.startTime=this.calendarList[0].date;
-                this.query.endTime=this.calendarList[41].date;
+                this.query.startTime=this.visibleCalendar[0].date;
+                this.query.endTime=this.visibleCalendar[41].date;
+                this.getData();
+            },            // 点击回到今天
+            handleSearch () {
                 this.getData();
             },
             // 点击某一天
@@ -219,7 +224,7 @@
             },
             calculateSchedule: function () {
                 let schedules = this.schedules
-                let dayarr = this.calendarList
+                let dayarr = this.visibleCalendar
 
                 let domdata = [
                     [[], [], [],[]],
@@ -332,6 +337,7 @@
                     })
                 }
                 this.scheduleDom = domdata
+                console.log(this.visibleCalendar)
             }
 
         }
